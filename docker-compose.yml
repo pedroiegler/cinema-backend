@@ -1,0 +1,27 @@
+version: '3.9'
+ 
+services:
+  project_cinema:
+    container_name: project_cinema
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    volumes:
+      - ./project_cinema:/project_cinema
+    env_file:
+      - ./dotenv_files/.env
+    depends_on:
+      - psql
+  psql:
+    container_name: psql
+    image: postgres:14-alpine
+    env_file:
+      - ./dotenv_files/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data: 
