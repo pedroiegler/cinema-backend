@@ -2,6 +2,6 @@
 
 set -e
 
-wait_psql.sh
-migrate.sh
-runserver.sh
+/scripts/.sh/wait_psql.sh
+/scripts/.sh/migrate.sh
+/scripts/.sh/runserver.sh

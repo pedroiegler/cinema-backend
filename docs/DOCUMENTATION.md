@@ -291,7 +291,7 @@ CONTACT_EMAIL=admin@cinema.com
 - **Gêneros**: Leitura pública, escrita requer autenticação (admin)
 
 ### Controle de Acesso
-- **RatingViewSet**: Acesso restrito ao usuário através de `get_queryset()` que filtra por `user=self.request.user`
+- **RatingViewSet**: Acesso restrito ao usuário através de `get_queryset()` que filtra por `user=self.request.user`, com tratamento especial para geração de schema Swagger e usuários não autenticados
 - **CommentViewSet**: Validação de propriedade implementada em `perform_update()` para edição de comentários
 - **MovieViewSet**: Ações de avaliação (`rate`, `remove_rating`) requerem usuário autenticado
 
@@ -474,26 +474,26 @@ docker-compose up --build
 ### 26/07/2025 - Correção do Comando de Inicialização do Container
 
 **Mudança Implementada:**
-- Corrigido o comando CMD no Dockerfile de `["commands.sh"]` para `[".sh/commands.sh"]`
-- Comando agora referencia corretamente o caminho completo do script dentro do diretório `/scripts`
+- Corrigido o comando CMD no Dockerfile de `[".sh/commands.sh"]` para `["/scripts/.sh/commands.sh"]`
+- Comando agora referencia corretamente o caminho absoluto completo do script
 
 **Motivação:**
 - Corrigir erro de execução onde o container não conseguia localizar o script `commands.sh`
-- Garantir que o PATH configurado (`/scripts:/venv/bin:$PATH`) seja utilizado corretamente
-- Alinhar com a estrutura de diretórios onde scripts estão organizados em subpastas
+- Garantir que o script de inicialização seja encontrado independentemente do diretório de trabalho
+- Usar caminho absoluto para maior confiabilidade na execução
 
 **Impacto:**
 - ✅ **Container inicia corretamente**: Script de inicialização é encontrado e executado
+- ✅ **Caminho absoluto confiável**: Não depende de PATH ou diretório atual
 - ✅ **Estrutura de diretórios respeitada**: Comando reflete a organização real dos scripts
-- ✅ **Compatibilidade com PATH**: Funciona corretamente com a variável PATH configurada
 
 **Detalhes Técnicos:**
 - Scripts estão organizados em `scripts/.sh/` no container
-- PATH inclui `/scripts` permitindo execução direta
-- CMD agora usa caminho relativo correto: `.sh/commands.sh`
+- CMD usa caminho absoluto: `/scripts/.sh/commands.sh`
+- Estrutura mantém organização por tipo de arquivo (.sh, .py)
 
 **Arquivos Afetados:**
-- `Dockerfile`: Linha CMD corrigida
+- `Dockerfile`: Linha CMD corrigida para usar caminho absoluto
 
 ### 26/07/2025 - Simplificação do Sistema de Inicialização
 

@@ -110,7 +110,14 @@ class RatingViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        return Rating.objects.filter(user=self.request.user)
+        # Handle Swagger schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return Rating.objects.none()
+        
+        # Only return ratings for authenticated users
+        if self.request.user.is_authenticated:
+            return Rating.objects.filter(user=self.request.user)
+        return Rating.objects.none()
 
 
 class CommentViewSet(viewsets.ModelViewSet):

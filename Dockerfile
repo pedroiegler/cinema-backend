@@ -21,4 +21,4 @@ ENV PATH="/scripts:/venv/bin:$PATH"
 
 USER duser
 
-CMD [".sh/commands.sh"]
+CMD ["/scripts/.sh/commands.sh"]
