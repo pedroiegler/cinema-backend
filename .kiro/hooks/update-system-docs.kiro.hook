@@ -1,7 +1,7 @@
 {
   "enabled": true,
   "name": "Update System Documentation",
-  "description": "Automatically updates the DOCUMENTACAO_SISTEMA.md file whenever any file in the project is modified",
+  "description": "Automatically updates the DOCUMENTATION.md file whenever any file in the project is modified",
   "version": "1",
   "when": {
     "type": "fileEdited",
@@ -11,6 +11,6 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "A file has been changed in the project. Please analyze the changes and update the DOCUMENTACAO_SISTEMA.md file to reflect the current state of the system. Make sure to document any new features, modifications, or structural changes that affect the system's functionality or architecture."
+    "prompt": "A file has been changed in the project. Please analyze the changes and update the DOCUMENTATION.md file to reflect the current state of the system. Make sure to document any new features, modifications, or structural changes that affect the system's functionality or architecture."
   }
 }

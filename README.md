@@ -16,7 +16,7 @@ cd cinema-backend
 cp dotenv_files/.env-example dotenv_files/.env
 
 # Gerar uma nova SECRET_KEY
-python scripts/generate_secret_key.py
+python scripts/.py/generate_secret_key.py
 ```
 
 Copie a SECRET_KEY gerada e substitua no arquivo `dotenv_files/.env`.

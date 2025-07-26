@@ -35,7 +35,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             return MovieDetailSerializer
         return MovieSerializer
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['GET'])
     def top_rated(self, request):
         """Filmes mais bem avaliados"""
         movies = Movie.objects.filter(is_active=True, ratings__isnull=False).distinct()
@@ -45,7 +45,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         serializer = MovieListSerializer(movies, many=True, context={'request': request})
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['GET'])
     def recent(self, request):
         """Filmes recentes"""
         recent_movies = Movie.objects.filter(
@@ -56,7 +56,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         serializer = MovieListSerializer(recent_movies, many=True, context={'request': request})
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['GET'])
     def coming_soon(self, request):
         """Filmes em breve"""
         coming_movies = Movie.objects.filter(
@@ -67,7 +67,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         serializer = MovieListSerializer(coming_movies, many=True, context={'request': request})
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['POST'])
     def rate(self, request, pk=None):
         """Avaliar um filme"""
         movie = self.get_object()
@@ -88,7 +88,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         serializer = RatingSerializer(rating, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
     
-    @action(detail=True, methods=['delete'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['DELETE'])
     def remove_rating(self, request, pk=None):
         """Remover avaliação de um filme"""
         movie = self.get_object()
@@ -105,7 +105,6 @@ class MovieViewSet(viewsets.ModelViewSet):
 
 class RatingViewSet(viewsets.ModelViewSet):
     serializer_class = RatingSerializer
-    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['movie', 'rating']
     ordering = ['-created_at']
@@ -117,7 +116,6 @@ class RatingViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.filter(is_active=True)
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['movie']
     ordering = ['-created_at']

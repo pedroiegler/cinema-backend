@@ -286,9 +286,14 @@ CONTACT_EMAIL=admin@cinema.com
 
 ### Permissões Implementadas
 - **Comentários**: Criação requer autenticação, edição apenas próprios
-- **Avaliações**: Todas as operações requerem autenticação
-- **Filmes**: Leitura pública, escrita requer autenticação (admin)
+- **Avaliações**: Operações requerem autenticação (controlado a nível de queryset)
+- **Filmes**: Leitura pública, ações de avaliação requerem autenticação
 - **Gêneros**: Leitura pública, escrita requer autenticação (admin)
+
+### Controle de Acesso
+- **RatingViewSet**: Acesso restrito ao usuário através de `get_queryset()` que filtra por `user=self.request.user`
+- **CommentViewSet**: Validação de propriedade implementada em `perform_update()` para edição de comentários
+- **MovieViewSet**: Ações de avaliação (`rate`, `remove_rating`) requerem usuário autenticado
 
 ## Infraestrutura
 
@@ -309,8 +314,7 @@ O sistema utiliza uma sequência ordenada de scripts para garantir inicializaç�
 
 1. **`wait_psql.sh`**: Aguarda PostgreSQL estar disponível
 2. **`migrate.sh`**: Executa migrações do banco de dados
-3. **`init_setup.sh`**: Controla a inicialização única do sistema
-4. **`runserver.sh`**: Inicia o servidor Django
+3. **`runserver.sh`**: Inicia o servidor Django
 
 #### Fluxo de Inicialização Detalhado
 
@@ -319,33 +323,16 @@ O script principal `commands.sh` orquestra toda a inicialização:
 ```bash
 wait_psql.sh    # Aguarda banco estar pronto
 migrate.sh      # Aplica migrações
-init_setup.sh   # Setup inicial (apenas primeira vez)
 runserver.sh    # Inicia servidor
 ```
 
-#### Sistema de Seeding Automático
+#### Sistema de Seeding Manual
 
-O script `init_setup.sh` implementa um sistema inteligente de seeding que:
-
-**Funcionalidades:**
-- Detecta automaticamente se é a primeira inicialização
-- Executa o seeding de dados iniciais apenas uma vez
-- Utiliza arquivo de controle para persistir estado entre reinicializações
-- Executa o script `seed_data.sh` que popula gêneros cinematográficos
-
-**Arquivo de Controle:**
-- **Localização**: `/project_cinema/.setup_done`
-- **Propósito**: Marca que o setup inicial já foi executado
-- **Persistência**: Mantido no volume do projeto para sobreviver a reinicializações do container
-
-**Comportamento:**
-- ✅ **Primeira execução**: Executa `seed_data.sh` e cria arquivo de controle
-- ℹ️ **Execuções subsequentes**: Detecta setup anterior e pula inicialização
+O sistema não executa mais seeding automático durante a inicialização. Os dados iniciais devem ser inseridos manualmente quando necessário.
 
 **Scripts do Sistema de Seeding:**
-- `scripts/seed_data.sh`: Executa o comando Django `seed_genres`
-- `scripts/init_setup.sh`: Controla a execução única do seeding
-- `scripts/commands.sh`: Orquestra todo o fluxo de inicialização
+- `scripts/seed_data.sh`: Executa o comando Django `seed_genres` (execução manual)
+- `scripts/commands.sh`: Orquestra o fluxo de inicialização básico
 
 ### Comandos Django Personalizados
 
@@ -395,7 +382,7 @@ cd cinema-backend
 cp dotenv_files/.env-example dotenv_files/.env
 
 # Gerar SECRET_KEY
-python scripts/generate_secret_key.py
+python scripts/.py/generate_secret_key.py
 ```
 
 3. **Executar com Docker**
@@ -464,6 +451,76 @@ docker-compose up --build
 - Scripts automatizados
 
 ## Correções Recentes
+
+### 26/07/2025 - Correção do Caminho do Script de Geração de SECRET_KEY
+
+**Mudança Implementada:**
+- Corrigido o caminho do script de geração de SECRET_KEY no README.md
+- Caminho atualizado de `python scripts/generate_secret_key.py` para `python scripts/.py/generate_secret_key.py`
+
+**Motivação:**
+- Alinhar a documentação com a estrutura real de diretórios do projeto
+- Scripts Python estão organizados no subdiretório `scripts/.py/`
+- Garantir que os comandos de configuração inicial funcionem corretamente
+
+**Impacto:**
+- ✅ **Comandos de setup funcionam**: Usuários conseguem gerar a SECRET_KEY corretamente
+- ✅ **Documentação alinhada**: README.md reflete a estrutura real do projeto
+- ✅ **Experiência do desenvolvedor**: Processo de configuração inicial sem erros
+
+**Arquivos Afetados:**
+- `README.md`: Comando de geração de SECRET_KEY corrigido
+
+### 26/07/2025 - Correção do Comando de Inicialização do Container
+
+**Mudança Implementada:**
+- Corrigido o comando CMD no Dockerfile de `["commands.sh"]` para `[".sh/commands.sh"]`
+- Comando agora referencia corretamente o caminho completo do script dentro do diretório `/scripts`
+
+**Motivação:**
+- Corrigir erro de execução onde o container não conseguia localizar o script `commands.sh`
+- Garantir que o PATH configurado (`/scripts:/venv/bin:$PATH`) seja utilizado corretamente
+- Alinhar com a estrutura de diretórios onde scripts estão organizados em subpastas
+
+**Impacto:**
+- ✅ **Container inicia corretamente**: Script de inicialização é encontrado e executado
+- ✅ **Estrutura de diretórios respeitada**: Comando reflete a organização real dos scripts
+- ✅ **Compatibilidade com PATH**: Funciona corretamente com a variável PATH configurada
+
+**Detalhes Técnicos:**
+- Scripts estão organizados em `scripts/.sh/` no container
+- PATH inclui `/scripts` permitindo execução direta
+- CMD agora usa caminho relativo correto: `.sh/commands.sh`
+
+**Arquivos Afetados:**
+- `Dockerfile`: Linha CMD corrigida
+
+### 26/07/2025 - Simplificação do Sistema de Inicialização
+
+**Mudança Implementada:**
+- Removido o script `init_setup.sh` da sequência de inicialização automática
+- Sistema de seeding automático desabilitado durante o startup do container
+- Inicialização agora segue fluxo mais simples e direto
+
+**Motivação:**
+- Simplificar o processo de inicialização do container
+- Dar maior controle ao desenvolvedor sobre quando executar o seeding
+- Reduzir complexidade e possíveis pontos de falha no startup
+
+**Impacto:**
+- ⚠️ **Seeding não é mais automático**: Gêneros devem ser inseridos manualmente
+- ✅ **Inicialização mais rápida**: Menos etapas no processo de startup
+- ✅ **Maior controle**: Desenvolvedor decide quando popular dados iniciais
+- ✅ **Menos complexidade**: Fluxo de inicialização mais direto
+
+**Como Popular Dados Iniciais Agora:**
+```bash
+# Executar manualmente após o container estar rodando
+docker exec -it project_cinema python manage.py seed_genres
+```
+
+**Arquivos Afetados:**
+- `scripts/commands.sh`: Removida linha `init_setup.sh`
 
 ### 20/07/2025 - Correção Crítica no Sistema de Inicialização
 
